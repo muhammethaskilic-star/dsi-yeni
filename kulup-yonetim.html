@@ -1,0 +1,824 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kulüp Yönetim Sistemi</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f4f3ef;
+    --surface: #ffffff;
+    --surface2: #f9f8f5;
+    --border: #e2e0d8;
+    --border2: #ccc9be;
+    --text: #1a1917;
+    --text2: #6b6860;
+    --text3: #a09e98;
+    --accent: #1d4ed8;
+    --accent-bg: #eff6ff;
+    --accent-border: #bfdbfe;
+    --green: #15803d;
+    --green-bg: #f0fdf4;
+    --green-border: #bbf7d0;
+    --red: #b91c1c;
+    --red-bg: #fef2f2;
+    --red-border: #fecaca;
+    --amber: #92400e;
+    --amber-bg: #fffbeb;
+    --amber-border: #fde68a;
+    --radius: 10px;
+    --radius-sm: 6px;
+    --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); font-size: 14px; min-height: 100vh; }
+  
+  /* Layout */
+  .app { display: flex; min-height: 100vh; }
+  .sidebar { width: 220px; min-width: 220px; background: var(--surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; position: fixed; top: 0; left: 0; height: 100vh; overflow-y: auto; z-index: 10; }
+  .main { margin-left: 220px; flex: 1; min-height: 100vh; }
+  
+  /* Sidebar */
+  .sidebar-header { padding: 20px 16px 16px; border-bottom: 1px solid var(--border); }
+  .sidebar-logo { display: flex; align-items: center; gap: 10px; }
+  .logo-icon { width: 36px; height: 36px; background: var(--accent); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 18px; }
+  .logo-text { font-size: 13px; font-weight: 600; color: var(--text); line-height: 1.2; }
+  .logo-sub { font-size: 11px; color: var(--text3); font-weight: 400; }
+  .nav { padding: 8px; flex: 1; }
+  .nav-section { font-size: 10px; font-weight: 600; color: var(--text3); letter-spacing: 0.08em; text-transform: uppercase; padding: 12px 8px 4px; }
+  .nav-item { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: var(--radius-sm); cursor: pointer; color: var(--text2); font-size: 13px; font-weight: 400; transition: all 0.15s; margin-bottom: 1px; }
+  .nav-item:hover { background: var(--bg); color: var(--text); }
+  .nav-item.active { background: var(--accent-bg); color: var(--accent); font-weight: 500; }
+  .nav-icon { font-size: 15px; width: 20px; text-align: center; }
+  .sidebar-footer { padding: 12px 16px; border-top: 1px solid var(--border); }
+  .sidebar-footer-text { font-size: 11px; color: var(--text3); }
+  
+  /* Topbar */
+  .topbar { background: var(--surface); border-bottom: 1px solid var(--border); padding: 14px 24px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 5; }
+  .topbar-left { display: flex; flex-direction: column; gap: 1px; }
+  .page-title { font-size: 16px; font-weight: 600; }
+  .page-sub { font-size: 12px; color: var(--text3); }
+  .topbar-right { display: flex; gap: 8px; align-items: center; }
+  
+  /* Buttons */
+  .btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px; border-radius: var(--radius-sm); font-size: 13px; font-weight: 500; cursor: pointer; border: 1px solid var(--border2); background: var(--surface); color: var(--text); transition: all 0.15s; font-family: inherit; }
+  .btn:hover { background: var(--bg); border-color: var(--border2); }
+  .btn-primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .btn-primary:hover { background: #1a44c2; border-color: #1a44c2; }
+  .btn-sm { padding: 4px 10px; font-size: 12px; }
+  .btn-danger { color: var(--red); border-color: var(--red-border); }
+  .btn-danger:hover { background: var(--red-bg); }
+  
+  /* Content */
+  .content { padding: 24px; }
+  
+  /* Stats grid */
+  .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 24px; }
+  .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 18px; }
+  .stat-icon { font-size: 20px; margin-bottom: 8px; }
+  .stat-label { font-size: 12px; color: var(--text2); margin-bottom: 4px; }
+  .stat-value { font-size: 24px; font-weight: 600; line-height: 1; margin-bottom: 4px; font-family: 'DM Mono', monospace; }
+  .stat-change { font-size: 12px; color: var(--text3); }
+  .stat-green .stat-value { color: var(--green); }
+  .stat-red .stat-value { color: var(--red); }
+  .stat-blue .stat-value { color: var(--accent); }
+  
+  /* Cards */
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 16px; overflow: hidden; box-shadow: var(--shadow); }
+  .card-header { padding: 14px 18px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+  .card-title { font-size: 14px; font-weight: 600; }
+  .card-subtitle { font-size: 12px; color: var(--text3); }
+  
+  /* Table */
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; }
+  th { padding: 10px 16px; text-align: left; font-size: 11px; font-weight: 600; color: var(--text3); letter-spacing: 0.04em; text-transform: uppercase; border-bottom: 1px solid var(--border); background: var(--surface2); }
+  td { padding: 11px 16px; border-bottom: 1px solid var(--border); font-size: 13px; vertical-align: middle; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: var(--surface2); }
+  
+  /* Badges */
+  .badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 9px; border-radius: 20px; font-size: 11px; font-weight: 500; }
+  .badge-green { background: var(--green-bg); color: var(--green); border: 1px solid var(--green-border); }
+  .badge-red { background: var(--red-bg); color: var(--red); border: 1px solid var(--red-border); }
+  .badge-amber { background: var(--amber-bg); color: var(--amber); border: 1px solid var(--amber-border); }
+  .badge-blue { background: var(--accent-bg); color: var(--accent); border: 1px solid var(--accent-border); }
+  .badge-gray { background: var(--surface2); color: var(--text2); border: 1px solid var(--border); }
+  
+  /* Avatar */
+  .avatar { width: 30px; height: 30px; border-radius: 50%; background: var(--accent-bg); display: inline-flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 600; color: var(--accent); border: 1px solid var(--accent-border); flex-shrink: 0; }
+  .avatar-name { display: flex; align-items: center; gap: 9px; }
+  
+  /* Progress */
+  .progress-wrap { margin: 4px 0; }
+  .progress-bar { height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; margin: 6px 0; }
+  .progress-fill { height: 100%; border-radius: 3px; background: var(--accent); transition: width 0.4s ease; }
+  .progress-fill.green { background: var(--green); }
+  .progress-fill.amber { background: #f59e0b; }
+  
+  /* Two col */
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  
+  /* Search */
+  .search { border: 1px solid var(--border2); border-radius: var(--radius-sm); padding: 7px 12px; font-size: 13px; background: var(--surface); color: var(--text); font-family: inherit; outline: none; width: 220px; }
+  .search:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(29,78,216,0.1); }
+  
+  /* Tabs */
+  .tabs { display: flex; gap: 2px; padding: 12px 18px 0; border-bottom: 1px solid var(--border); }
+  .tab { padding: 7px 14px; font-size: 13px; font-weight: 500; cursor: pointer; color: var(--text3); border-bottom: 2px solid transparent; margin-bottom: -1px; transition: all 0.15s; }
+  .tab:hover { color: var(--text); }
+  .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+  
+  /* Modal */
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.35); display: flex; align-items: center; justify-content: center; z-index: 100; backdrop-filter: blur(2px); }
+  .modal { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 24px; width: 480px; max-width: 95vw; box-shadow: 0 20px 60px rgba(0,0,0,0.15); }
+  .modal-title { font-size: 16px; font-weight: 600; margin-bottom: 18px; display: flex; align-items: center; gap: 8px; }
+  .modal-footer { display: flex; gap: 8px; justify-content: flex-end; margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border); }
+  .hidden { display: none !important; }
+  .section-hidden { display: none; }
+  
+  /* Form */
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+  .form-row-full { margin-bottom: 12px; }
+  .form-label { font-size: 12px; font-weight: 500; color: var(--text2); margin-bottom: 5px; }
+  .input, .select, .textarea { width: 100%; border: 1px solid var(--border2); border-radius: var(--radius-sm); padding: 8px 11px; font-size: 13px; background: var(--surface); color: var(--text); font-family: inherit; outline: none; transition: border-color 0.15s; }
+  .input:focus, .select:focus, .textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(29,78,216,0.1); }
+  .textarea { resize: vertical; min-height: 80px; }
+  
+  /* Match card */
+  .match-item { padding: 14px 18px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+  .match-item:last-child { border-bottom: none; }
+  .match-teams { font-size: 14px; font-weight: 500; display: flex; align-items: center; gap: 10px; }
+  .vs { font-size: 11px; color: var(--text3); font-weight: 400; }
+  .match-score { font-family: 'DM Mono', monospace; font-size: 18px; font-weight: 600; padding: 4px 14px; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; }
+  .match-date { font-size: 12px; color: var(--text3); margin-top: 2px; }
+  
+  /* Duyuru */
+  .duyuru-card { padding: 16px 18px; border-bottom: 1px solid var(--border); }
+  .duyuru-card:last-child { border-bottom: none; }
+  .duyuru-title { font-size: 14px; font-weight: 600; margin-bottom: 5px; }
+  .duyuru-text { font-size: 13px; color: var(--text2); line-height: 1.6; margin-bottom: 8px; }
+  .duyuru-meta { font-size: 11px; color: var(--text3); }
+  
+  /* Chart bars */
+  .chart { display: flex; align-items: flex-end; gap: 8px; height: 120px; padding: 0 4px; }
+  .bar-wrap { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 5px; height: 100%; justify-content: flex-end; }
+  .bar { width: 100%; background: var(--accent-bg); border: 1px solid var(--accent-border); border-radius: 5px 5px 0 0; transition: background 0.2s; position: relative; }
+  .bar:hover { background: var(--accent); }
+  .bar-label { font-size: 11px; color: var(--text3); font-family: 'DM Mono', monospace; }
+  .bar-month { font-size: 11px; color: var(--text3); }
+  
+  /* Toast */
+  .toast { position: fixed; bottom: 24px; right: 24px; background: var(--text); color: #fff; padding: 10px 16px; border-radius: var(--radius); font-size: 13px; z-index: 999; transform: translateY(80px); opacity: 0; transition: all 0.3s; }
+  .toast.show { transform: translateY(0); opacity: 1; }
+  
+  /* Empty state */
+  .empty { text-align: center; padding: 40px 20px; color: var(--text3); font-size: 13px; }
+
+  @media (max-width: 900px) {
+    .sidebar { width: 56px; }
+    .main { margin-left: 56px; }
+    .logo-text, .logo-sub, .nav-section, .nav-label { display: none; }
+    .stats-grid { grid-template-columns: 1fr 1fr; }
+    .two-col { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-logo">
+        <div class="logo-icon">⚽</div>
+        <div>
+          <div class="logo-text">Kulüp Yönetimi</div>
+          <div class="logo-sub">v1.0</div>
+        </div>
+      </div>
+    </div>
+    <div class="nav">
+      <div class="nav-section">Ana Menü</div>
+      <div class="nav-item active" onclick="showSection('dashboard',this)"><span class="nav-icon">▦</span><span class="nav-label">Dashboard</span></div>
+      <div class="nav-item" onclick="showSection('uyeler',this)"><span class="nav-icon">👤</span><span class="nav-label">Üyeler</span></div>
+      <div class="nav-item" onclick="showSection('aidat',this)"><span class="nav-icon">💳</span><span class="nav-label">Aidat Takibi</span></div>
+      <div class="nav-item" onclick="showSection('maclar',this)"><span class="nav-icon">🏟</span><span class="nav-label">Maçlar</span></div>
+      <div class="nav-item" onclick="showSection('duyurular',this)"><span class="nav-icon">📢</span><span class="nav-label">Duyurular</span></div>
+      <div class="nav-item" onclick="showSection('raporlar',this)"><span class="nav-icon">📊</span><span class="nav-label">Raporlar</span></div>
+    </div>
+    <div class="sidebar-footer">
+      <div class="sidebar-footer-text">© 2026 Kulüp Yönetimi</div>
+    </div>
+  </div>
+
+  <!-- Main -->
+  <div class="main">
+
+    <!-- DASHBOARD -->
+    <div id="section-dashboard">
+      <div class="topbar">
+        <div class="topbar-left"><div class="page-title">Dashboard</div><div class="page-sub" id="dash-date"></div></div>
+        <div class="topbar-right"><button class="btn btn-sm" onclick="showSection('uyeler',document.querySelectorAll('.nav-item')[1])">+ Hızlı Üye Ekle</button></div>
+      </div>
+      <div class="content">
+        <div class="stats-grid" id="dash-stats"></div>
+        <div class="two-col">
+          <div class="card">
+            <div class="card-header"><span class="card-title">Son Ödemeler</span><span class="badge badge-green" id="dash-odeme-badge"></span></div>
+            <table><thead><tr><th>Üye</th><th>Dönem</th><th>Durum</th></tr></thead><tbody id="dash-odeme-list"></tbody></table>
+          </div>
+          <div class="card">
+            <div class="card-header"><span class="card-title">Yaklaşan Maçlar</span></div>
+            <div id="dash-mac-list"></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><span class="card-title">Mart 2026 Aidat Tahsilatı</span><span class="card-subtitle" id="dash-tahsilat-text"></span></div>
+          <div style="padding:16px 18px">
+            <div class="progress-bar"><div class="progress-fill green" id="dash-progress"></div></div>
+            <div style="display:flex;gap:16px;margin-top:10px;font-size:12px;color:var(--text3)" id="dash-progress-legend"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ÜYELER -->
+    <div id="section-uyeler" class="section-hidden">
+      <div class="topbar">
+        <div class="topbar-left"><div class="page-title">Üyeler</div><div class="page-sub" id="uye-count-text"></div></div>
+        <div class="topbar-right">
+          <input class="search" placeholder="Üye ara..." oninput="filterUyeler(this.value)">
+          <button class="btn btn-primary" onclick="openModal('modal-uye')">+ Yeni Üye</button>
+        </div>
+      </div>
+      <div class="content">
+        <div class="card">
+          <div class="table-wrap">
+            <table><thead><tr><th>Ad Soyad</th><th>Pozisyon</th><th>Telefon</th><th>Kayıt Tarihi</th><th>Aidat</th><th>Durum</th><th>İşlem</th></tr></thead>
+            <tbody id="uye-tbody"></tbody></table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- AİDAT -->
+    <div id="section-aidat" class="section-hidden">
+      <div class="topbar">
+        <div class="topbar-left"><div class="page-title">Aidat Takibi</div><div class="page-sub">Ödeme kayıtları ve takip</div></div>
+        <div class="topbar-right"><button class="btn btn-primary" onclick="openModal('modal-odeme')">+ Ödeme Kaydet</button></div>
+      </div>
+      <div class="content">
+        <div class="stats-grid" id="aidat-stats"></div>
+        <div class="card">
+          <div class="tabs">
+            <div class="tab active" onclick="switchAidatTab(this,'tum')">Tümü</div>
+            <div class="tab" onclick="switchAidatTab(this,'odendi')">Ödenmiş</div>
+            <div class="tab" onclick="switchAidatTab(this,'bekliyor')">Bekleyen</div>
+            <div class="tab" onclick="switchAidatTab(this,'gecikti')">Gecikmiş</div>
+          </div>
+          <div class="table-wrap">
+            <table><thead><tr><th>Üye</th><th>Dönem</th><th>Tutar</th><th>Ödeme Tarihi</th><th>Durum</th><th>Not</th><th>İşlem</th></tr></thead>
+            <tbody id="aidat-tbody"></tbody></table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MAÇLAR -->
+    <div id="section-maclar" class="section-hidden">
+      <div class="topbar">
+        <div class="topbar-left"><div class="page-title">Maçlar</div><div class="page-sub" id="mac-count-text"></div></div>
+        <div class="topbar-right"><button class="btn btn-primary" onclick="openModal('modal-mac')">+ Maç Ekle</button></div>
+      </div>
+      <div class="content">
+        <div class="stats-grid" id="mac-stats"></div>
+        <div class="card">
+          <div class="table-wrap">
+            <table><thead><tr><th>Tarih</th><th>Rakip</th><th>Konum</th><th>Skor</th><th>Sonuç</th><th>Not</th><th>İşlem</th></tr></thead>
+            <tbody id="mac-tbody"></tbody></table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- DUYURULAR -->
+    <div id="section-duyurular" class="section-hidden">
+      <div class="topbar">
+        <div class="topbar-left"><div class="page-title">Duyurular</div><div class="page-sub" id="duyuru-count-text"></div></div>
+        <div class="topbar-right"><button class="btn btn-primary" onclick="openModal('modal-duyuru')">+ Duyuru Ekle</button></div>
+      </div>
+      <div class="content">
+        <div class="card"><div id="duyuru-list"></div></div>
+      </div>
+    </div>
+
+    <!-- RAPORLAR -->
+    <div id="section-raporlar" class="section-hidden">
+      <div class="topbar">
+        <div class="topbar-left"><div class="page-title">Raporlar</div><div class="page-sub">İstatistik ve özet</div></div>
+      </div>
+      <div class="content">
+        <div class="two-col">
+          <div class="card">
+            <div class="card-header"><span class="card-title">Aylık Aidat Tahsilatı</span></div>
+            <div style="padding:16px 18px"><div class="chart" id="rapor-chart"></div></div>
+          </div>
+          <div class="card">
+            <div class="card-header"><span class="card-title">Maç Sonuçları</span></div>
+            <div style="padding:20px 18px" id="rapor-maclar"></div>
+          </div>
+        </div>
+        <div class="two-col">
+          <div class="card">
+            <div class="card-header"><span class="card-title">Aidat Durumu Dağılımı</span></div>
+            <div style="padding:16px 18px" id="rapor-aidat-dag"></div>
+          </div>
+          <div class="card">
+            <div class="card-header"><span class="card-title">Pozisyon Dağılımı</span></div>
+            <div style="padding:16px 18px" id="rapor-pozisyon"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /main -->
+</div><!-- /app -->
+
+<!-- MODALS -->
+<div id="modal-uye" class="modal-overlay hidden">
+  <div class="modal">
+    <div class="modal-title">👤 Yeni Üye Ekle</div>
+    <div class="form-row">
+      <div><div class="form-label">Ad</div><input class="input" id="m-ad" placeholder="Ad"></div>
+      <div><div class="form-label">Soyad</div><input class="input" id="m-soyad" placeholder="Soyad"></div>
+    </div>
+    <div class="form-row">
+      <div><div class="form-label">Pozisyon</div>
+        <select class="select" id="m-poz">
+          <option>Forvet</option><option>Orta saha</option><option>Defans</option><option>Kaleci</option><option>Yönetim</option>
+        </select>
+      </div>
+      <div><div class="form-label">Telefon</div><input class="input" id="m-tel" placeholder="0555 000 00 00"></div>
+    </div>
+    <div class="form-row">
+      <div><div class="form-label">E-posta</div><input class="input" id="m-email" placeholder="ornek@mail.com" type="email"></div>
+      <div><div class="form-label">Doğum Tarihi</div><input class="input" id="m-dob" type="date"></div>
+    </div>
+    <div class="form-row">
+      <div><div class="form-label">Aylık Aidat (₺)</div><input class="input" id="m-aidat" type="number" value="500"></div>
+      <div><div class="form-label">Kayıt Tarihi</div><input class="input" id="m-kayit" type="date"></div>
+    </div>
+    <div class="form-row-full"><div class="form-label">Notlar</div><textarea class="textarea" id="m-not" placeholder="Üye hakkında notlar..."></textarea></div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('modal-uye')">İptal</button>
+      <button class="btn btn-primary" onclick="uyeEkle()">Kaydet</button>
+    </div>
+  </div>
+</div>
+
+<div id="modal-odeme" class="modal-overlay hidden">
+  <div class="modal">
+    <div class="modal-title">💳 Ödeme Kaydet</div>
+    <div class="form-row">
+      <div><div class="form-label">Üye</div><select class="select" id="o-uye"></select></div>
+      <div><div class="form-label">Dönem</div>
+        <select class="select" id="o-donem">
+          <option>Mart 2026</option><option>Şubat 2026</option><option>Ocak 2026</option><option>Aralık 2025</option><option>Kasım 2025</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div><div class="form-label">Tutar (₺)</div><input class="input" id="o-tutar" type="number" value="500"></div>
+      <div><div class="form-label">Ödeme Tarihi</div><input class="input" id="o-tarih" type="date"></div>
+    </div>
+    <div class="form-row">
+      <div><div class="form-label">Durum</div>
+        <select class="select" id="o-durum">
+          <option value="odendi">Ödendi</option><option value="bekliyor">Bekliyor</option><option value="gecikti">Gecikmiş</option>
+        </select>
+      </div>
+      <div><div class="form-label">Ödeme Yöntemi</div>
+        <select class="select" id="o-yontem">
+          <option>Nakit</option><option>Banka havalesi</option><option>Kredi kartı</option><option>EFT</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row-full"><div class="form-label">Not</div><input class="input" id="o-not" placeholder="Opsiyonel not..."></div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('modal-odeme')">İptal</button>
+      <button class="btn btn-primary" onclick="odemeKaydet()">Kaydet</button>
+    </div>
+  </div>
+</div>
+
+<div id="modal-mac" class="modal-overlay hidden">
+  <div class="modal">
+    <div class="modal-title">🏟 Maç Ekle</div>
+    <div class="form-row">
+      <div><div class="form-label">Tarih</div><input class="input" id="mac-tarih" type="date"></div>
+      <div><div class="form-label">Saat</div><input class="input" id="mac-saat" type="time" value="15:00"></div>
+    </div>
+    <div class="form-row">
+      <div><div class="form-label">Rakip Takım</div><input class="input" id="mac-rakip" placeholder="Rakip takım adı"></div>
+      <div><div class="form-label">Konum</div>
+        <select class="select" id="mac-konum">
+          <option>Ev</option><option>Deplasman</option><option>Nötr saha</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div><div class="form-label">Skor (boş bırak = oynanmadı)</div><input class="input" id="mac-skor" placeholder="2-1"></div>
+      <div><div class="form-label">Müsabaka</div>
+        <select class="select" id="mac-lig">
+          <option>Lig</option><option>Kupa</option><option>Hazırlık</option><option>Turnuva</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row-full"><div class="form-label">Not</div><input class="input" id="mac-not" placeholder="Notlar..."></div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('modal-mac')">İptal</button>
+      <button class="btn btn-primary" onclick="macEkle()">Kaydet</button>
+    </div>
+  </div>
+</div>
+
+<div id="modal-duyuru" class="modal-overlay hidden">
+  <div class="modal">
+    <div class="modal-title">📢 Duyuru Ekle</div>
+    <div class="form-row-full"><div class="form-label">Başlık</div><input class="input" id="d-baslik" placeholder="Duyuru başlığı"></div>
+    <div class="form-row-full"><div class="form-label">İçerik</div><textarea class="textarea" id="d-icerik" placeholder="Duyuru metni..." style="min-height:100px"></textarea></div>
+    <div class="form-row">
+      <div><div class="form-label">Kategori</div>
+        <select class="select" id="d-kat">
+          <option>Genel</option><option>Antrenman</option><option>Maç</option><option>Aidat</option><option>Toplantı</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('modal-duyuru')">İptal</button>
+      <button class="btn btn-primary" onclick="duyuruEkle()">Yayınla</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ===================== VERİ =====================
+let uyeler = [
+  {id:1,ad:'Ahmet Yılmaz',poz:'Forvet',tel:'0532 111 22 33',email:'ahmet@mail.com',dob:'1995-03-15',kayit:'2024-01-15',aidat:500,durum:'odendi',not:'Kaptan'},
+  {id:2,ad:'Mehmet Koç',poz:'Defans',tel:'0533 222 33 44',email:'mehmet@mail.com',dob:'1997-07-22',kayit:'2024-02-01',aidat:500,durum:'odendi',not:''},
+  {id:3,ad:'Zeynep Demir',poz:'Orta saha',tel:'0541 333 44 55',email:'zeynep@mail.com',dob:'1999-11-08',kayit:'2024-03-10',aidat:500,durum:'odendi',not:''},
+  {id:4,ad:'Can Şahin',poz:'Kaleci',tel:'0545 444 55 66',email:'can@mail.com',dob:'1993-05-30',kayit:'2023-09-05',aidat:500,durum:'bekliyor',not:''},
+  {id:5,ad:'Elif Kurt',poz:'Defans',tel:'0546 555 66 77',email:'elif@mail.com',dob:'2000-02-14',kayit:'2023-11-20',aidat:500,durum:'gecikti',not:'Şubat borcu var'},
+  {id:6,ad:'Burak Arslan',poz:'Forvet',tel:'0552 666 77 88',email:'burak@mail.com',dob:'1996-08-03',kayit:'2024-01-28',aidat:500,durum:'odendi',not:''},
+  {id:7,ad:'Selin Kaya',poz:'Orta saha',tel:'0553 777 88 99',email:'selin@mail.com',dob:'1998-12-19',kayit:'2024-04-05',aidat:500,durum:'odendi',not:''},
+  {id:8,ad:'Murat Çelik',poz:'Defans',tel:'0554 888 99 00',email:'murat@mail.com',dob:'1994-09-27',kayit:'2023-07-15',aidat:500,durum:'bekliyor',not:''},
+];
+let nextUyeId = 9;
+
+let odemeler = [
+  {id:1,uye:'Ahmet Yılmaz',donem:'Mart 2026',tutar:500,tarih:'2026-03-28',durum:'odendi',yontem:'Nakit',not:''},
+  {id:2,uye:'Mehmet Koç',donem:'Mart 2026',tutar:500,tarih:'2026-03-27',durum:'odendi',yontem:'Banka havalesi',not:''},
+  {id:3,uye:'Zeynep Demir',donem:'Mart 2026',tutar:500,tarih:'2026-03-25',durum:'odendi',yontem:'Nakit',not:''},
+  {id:4,uye:'Can Şahin',donem:'Mart 2026',tutar:500,tarih:'-',durum:'bekliyor',yontem:'-',not:''},
+  {id:5,uye:'Elif Kurt',donem:'Mart 2026',tutar:500,tarih:'-',durum:'gecikti',yontem:'-',not:'Şubat ödemesi de eksik'},
+  {id:6,uye:'Burak Arslan',donem:'Mart 2026',tutar:500,tarih:'2026-03-20',durum:'odendi',yontem:'EFT',not:''},
+  {id:7,uye:'Selin Kaya',donem:'Mart 2026',tutar:500,tarih:'2026-03-22',durum:'odendi',yontem:'Nakit',not:''},
+  {id:8,uye:'Murat Çelik',donem:'Mart 2026',tutar:500,tarih:'-',durum:'bekliyor',yontem:'-',not:''},
+];
+let nextOdemeId = 9;
+
+let maclar = [
+  {id:1,tarih:'2026-04-05',saat:'15:00',rakip:'Galatasaray SK',konum:'Ev',skor:'-',sonuc:'Bekliyor',lig:'Lig',not:''},
+  {id:2,tarih:'2026-04-12',saat:'19:30',rakip:'Beşiktaş JK',konum:'Deplasman',skor:'-',sonuc:'Bekliyor',lig:'Lig',not:''},
+  {id:3,tarih:'2026-03-22',saat:'15:00',rakip:'Trabzonspor',konum:'Ev',skor:'3-1',sonuc:'Galibiyet',lig:'Lig',not:''},
+  {id:4,tarih:'2026-03-08',saat:'18:00',rakip:'Beşiktaş JK',konum:'Deplasman',skor:'1-1',sonuc:'Beraberlik',lig:'Lig',not:''},
+  {id:5,tarih:'2026-02-22',saat:'15:00',rakip:'Başakşehir FK',konum:'Ev',skor:'2-0',sonuc:'Galibiyet',lig:'Kupa',not:'Çeyrek final'},
+  {id:6,tarih:'2026-02-08',saat:'14:00',rakip:'Antalyaspor',konum:'Deplasman',skor:'0-2',sonuc:'Yenilgi',lig:'Lig',not:''},
+];
+let nextMacId = 7;
+
+let duyurular = [
+  {id:1,baslik:'Nisan ayı antrenman programı yayınlandı',icerik:'Nisan ayı antrenman takvimi güncellenmiştir. Salı ve Perşembe 19:00, Cumartesi 10:00 olarak belirlenmiştir.',tarih:'30 Mart 2026',kat:'Antrenman'},
+  {id:2,baslik:'Mart ayı aidat hatırlatması',icerik:'Mart ayı aidat ödemeleri için son gün 31 Marttır. Ödeme yapmayan üyeler lütfen yönetimle iletişime geçsin.',tarih:'25 Mart 2026',kat:'Aidat'},
+  {id:3,baslik:'5 Nisan maçı için ulaşım',icerik:'Galatasaray maçına toplu ulaşım ayarlanmıştır. Saat 13:00\'te kulüp binası önünden hareket edilecektir.',tarih:'20 Mart 2026',kat:'Maç'},
+];
+let nextDuyuruId = 4;
+let aidatTabFilter = 'tum';
+
+// ===================== YARDIMCILAR =====================
+function initials(name) { return name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase(); }
+function badgeForDurum(d) {
+  if(d==='odendi') return '<span class="badge badge-green">✓ Ödendi</span>';
+  if(d==='bekliyor') return '<span class="badge badge-amber">⏳ Bekliyor</span>';
+  if(d==='gecikti') return '<span class="badge badge-red">! Gecikmiş</span>';
+  if(d==='Galibiyet') return '<span class="badge badge-green">Galibiyet</span>';
+  if(d==='Beraberlik') return '<span class="badge badge-amber">Beraberlik</span>';
+  if(d==='Yenilgi') return '<span class="badge badge-red">Yenilgi</span>';
+  if(d==='Bekliyor') return '<span class="badge badge-blue">Bekliyor</span>';
+  return '<span class="badge badge-gray">'+d+'</span>';
+}
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 2500);
+}
+function openModal(id) {
+  if(id==='modal-odeme') refreshOdemeUyeSelect();
+  document.getElementById(id).classList.remove('hidden');
+}
+function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+function showSection(id, el) {
+  document.querySelectorAll('[id^="section-"]').forEach(s=>s.classList.add('section-hidden'));
+  document.getElementById('section-'+id).classList.remove('section-hidden');
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  if(el) el.classList.add('active');
+  const renders = {dashboard:renderDashboard,uyeler:renderUyeler,aidat:()=>renderAidat(aidatTabFilter),maclar:renderMaclar,duyurular:renderDuyurular,raporlar:renderRaporlar};
+  if(renders[id]) renders[id]();
+}
+
+// ===================== DASHBOARD =====================
+function renderDashboard() {
+  const now = new Date();
+  document.getElementById('dash-date').textContent = now.toLocaleDateString('tr-TR',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  const odendi = uyeler.filter(u=>u.durum==='odendi').length;
+  const bekliyor = uyeler.filter(u=>u.durum==='bekliyor').length;
+  const gecikti = uyeler.filter(u=>u.durum==='gecikti').length;
+  const toplamGelir = odemeler.filter(o=>o.durum==='odendi').reduce((s,o)=>s+o.tutar,0);
+  document.getElementById('dash-stats').innerHTML = `
+    <div class="stat-card stat-blue"><div class="stat-icon">👥</div><div class="stat-label">Toplam Üye</div><div class="stat-value">${uyeler.length}</div><div class="stat-change">Kayıtlı üye</div></div>
+    <div class="stat-card stat-green"><div class="stat-icon">✅</div><div class="stat-label">Aidat Ödedi</div><div class="stat-value">${odendi}</div><div class="stat-change">%${Math.round(odendi/uyeler.length*100)} ödeme oranı</div></div>
+    <div class="stat-card stat-red"><div class="stat-icon">⚠️</div><div class="stat-label">Gecikmiş</div><div class="stat-value">${gecikti}</div><div class="stat-change">${bekliyor} bekliyor</div></div>
+    <div class="stat-card"><div class="stat-icon">💰</div><div class="stat-label">Bu Ay Gelir</div><div class="stat-value" style="font-family:'DM Mono',monospace">₺${toplamGelir.toLocaleString('tr-TR')}</div><div class="stat-change">Toplam tahsilat</div></div>`;
+  document.getElementById('dash-odeme-badge').textContent = odemeler.filter(o=>o.durum==='odendi').length + ' ödeme';
+  const son = odemeler.filter(o=>o.durum==='odendi').slice(0,5);
+  document.getElementById('dash-odeme-list').innerHTML = son.map(o=>`<tr><td><div class="avatar-name"><div class="avatar">${initials(o.uye)}</div>${o.uye}</div></td><td>${o.donem}</td><td>${badgeForDurum(o.durum)}</td></tr>`).join('');
+  const gelecek = maclar.filter(m=>m.sonuc==='Bekliyor').slice(0,3);
+  document.getElementById('dash-mac-list').innerHTML = gelecek.length ? gelecek.map(m=>`
+    <div class="match-item">
+      <div><div class="match-teams">${m.rakip} <span class="vs">vs biz</span></div><div class="match-date">${m.tarih} · ${m.saat} · ${m.lig}</div></div>
+      <span class="badge ${m.konum==='Ev'?'badge-green':'badge-amber'}">${m.konum}</span>
+    </div>`).join('') : '<div class="empty">Yaklaşan maç yok</div>';
+  const pct = Math.round(odendi/(odendi+bekliyor+gecikti)*100);
+  document.getElementById('dash-progress').style.width = pct+'%';
+  document.getElementById('dash-tahsilat-text').textContent = `%${pct} tamamlandı`;
+  document.getElementById('dash-progress-legend').innerHTML = `<span style="color:var(--green)">● ${odendi} ödedi</span><span style="color:var(--amber)">● ${bekliyor} bekliyor</span><span style="color:var(--red)">● ${gecikti} gecikti</span>`;
+}
+
+// ===================== ÜYELER =====================
+function renderUyeler(data) {
+  data = data || uyeler;
+  document.getElementById('uye-count-text').textContent = data.length + ' üye kayıtlı';
+  document.getElementById('uye-tbody').innerHTML = data.length ? data.map(u=>`
+    <tr>
+      <td><div class="avatar-name"><div class="avatar">${initials(u.ad)}</div><div><div>${u.ad}</div><div style="font-size:11px;color:var(--text3)">${u.email||''}</div></div></div></td>
+      <td><span class="badge badge-gray">${u.poz}</span></td>
+      <td style="color:var(--text2);font-family:'DM Mono',monospace;font-size:12px">${u.tel}</td>
+      <td style="color:var(--text3)">${u.kayit}</td>
+      <td style="font-family:'DM Mono',monospace">₺${u.aidat}</td>
+      <td>${badgeForDurum(u.durum)}</td>
+      <td><button class="btn btn-sm btn-danger" onclick="uyeSil(${u.id})">Sil</button></td>
+    </tr>`).join('') : '<tr><td colspan="7" class="empty">Üye bulunamadı</td></tr>';
+}
+function filterUyeler(q) {
+  q = q.toLowerCase();
+  renderUyeler(uyeler.filter(u=>u.ad.toLowerCase().includes(q)||u.poz.toLowerCase().includes(q)||u.tel.includes(q)));
+}
+function uyeEkle() {
+  const ad = document.getElementById('m-ad').value.trim();
+  const soyad = document.getElementById('m-soyad').value.trim();
+  if(!ad||!soyad) { toast('Ad ve soyad zorunlu!'); return; }
+  uyeler.push({
+    id: nextUyeId++,
+    ad: ad+' '+soyad,
+    poz: document.getElementById('m-poz').value,
+    tel: document.getElementById('m-tel').value||'-',
+    email: document.getElementById('m-email').value||'',
+    dob: document.getElementById('m-dob').value||'-',
+    kayit: document.getElementById('m-kayit').value || new Date().toISOString().slice(0,10),
+    aidat: parseInt(document.getElementById('m-aidat').value)||500,
+    durum: 'bekliyor',
+    not: document.getElementById('m-not').value
+  });
+  closeModal('modal-uye');
+  ['m-ad','m-soyad','m-tel','m-email','m-dob','m-not'].forEach(id=>document.getElementById(id).value='');
+  renderUyeler(); toast('✓ Üye eklendi');
+}
+function uyeSil(id) {
+  if(!confirm('Bu üyeyi silmek istiyor musunuz?')) return;
+  uyeler = uyeler.filter(u=>u.id!==id);
+  renderUyeler(); toast('Üye silindi');
+}
+
+// ===================== AİDAT =====================
+function renderAidat(filter) {
+  aidatTabFilter = filter||'tum';
+  let data = odemeler;
+  if(filter==='odendi') data = odemeler.filter(o=>o.durum==='odendi');
+  if(filter==='bekliyor') data = odemeler.filter(o=>o.durum==='bekliyor');
+  if(filter==='gecikti') data = odemeler.filter(o=>o.durum==='gecikti');
+  const od = odemeler.filter(o=>o.durum==='odendi').length;
+  const bek = odemeler.filter(o=>o.durum==='bekliyor').length;
+  const gec = odemeler.filter(o=>o.durum==='gecikti').length;
+  const gelir = odemeler.filter(o=>o.durum==='odendi').reduce((s,o)=>s+o.tutar,0);
+  const bekTutar = odemeler.filter(o=>o.durum!=='odendi').reduce((s,o)=>s+o.tutar,0);
+  document.getElementById('aidat-stats').innerHTML = `
+    <div class="stat-card stat-green"><div class="stat-label">Tahsil Edilen</div><div class="stat-value" style="font-size:20px;font-family:'DM Mono',monospace">₺${gelir.toLocaleString('tr-TR')}</div><div class="stat-change">${od} ödeme</div></div>
+    <div class="stat-card stat-red"><div class="stat-label">Bekleyen</div><div class="stat-value" style="font-size:20px;font-family:'DM Mono',monospace">₺${bekTutar.toLocaleString('tr-TR')}</div><div class="stat-change">${bek+gec} ödeme</div></div>
+    <div class="stat-card"><div class="stat-label">Aylık Aidat</div><div class="stat-value" style="font-size:20px;font-family:'DM Mono',monospace">₺500</div><div class="stat-change">Kişi başı</div></div>
+    <div class="stat-card"><div class="stat-label">Gecikmiş</div><div class="stat-value" style="font-size:20px;color:var(--red)">${gec}</div><div class="stat-change">kayıt</div></div>`;
+  document.getElementById('aidat-tbody').innerHTML = data.length ? data.map(o=>`
+    <tr>
+      <td><div class="avatar-name"><div class="avatar">${initials(o.uye)}</div>${o.uye}</div></td>
+      <td>${o.donem}</td>
+      <td style="font-family:'DM Mono',monospace;font-weight:500">₺${o.tutar}</td>
+      <td style="color:var(--text3)">${o.tarih}</td>
+      <td>${badgeForDurum(o.durum)}</td>
+      <td style="color:var(--text3);font-size:12px">${o.not||o.yontem||''}</td>
+      <td><button class="btn btn-sm btn-danger" onclick="odemeSil(${o.id})">Sil</button></td>
+    </tr>`).join('') : '<tr><td colspan="7" class="empty">Kayıt bulunamadı</td></tr>';
+}
+function switchAidatTab(el, filter) {
+  document.querySelectorAll('#section-aidat .tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  renderAidat(filter);
+}
+function refreshOdemeUyeSelect() {
+  document.getElementById('o-uye').innerHTML = uyeler.map(u=>`<option>${u.ad}</option>`).join('');
+}
+function odemeKaydet() {
+  const uye = document.getElementById('o-uye').value;
+  const durum = document.getElementById('o-durum').value;
+  odemeler.unshift({
+    id: nextOdemeId++,
+    uye, durum,
+    donem: document.getElementById('o-donem').value,
+    tutar: parseInt(document.getElementById('o-tutar').value)||500,
+    tarih: document.getElementById('o-tarih').value||new Date().toISOString().slice(0,10),
+    yontem: document.getElementById('o-yontem').value,
+    not: document.getElementById('o-not').value
+  });
+  const u = uyeler.find(x=>x.ad===uye);
+  if(u) u.durum = durum;
+  closeModal('modal-odeme');
+  renderAidat(aidatTabFilter); toast('✓ Ödeme kaydedildi');
+}
+function odemeSil(id) {
+  if(!confirm('Bu ödeme kaydını silmek istiyor musunuz?')) return;
+  odemeler = odemeler.filter(o=>o.id!==id);
+  renderAidat(aidatTabFilter); toast('Ödeme silindi');
+}
+
+// ===================== MAÇLAR =====================
+function calcSonuc(skor) {
+  if(!skor||skor==='-'||!skor.includes('-')) return 'Bekliyor';
+  const p = skor.split('-').map(Number);
+  return p[0]>p[1]?'Galibiyet':p[0]===p[1]?'Beraberlik':'Yenilgi';
+}
+function renderMaclar() {
+  const gal = maclar.filter(m=>m.sonuc==='Galibiyet').length;
+  const ber = maclar.filter(m=>m.sonuc==='Beraberlik').length;
+  const yen = maclar.filter(m=>m.sonuc==='Yenilgi').length;
+  document.getElementById('mac-count-text').textContent = maclar.length + ' maç kayıtlı';
+  document.getElementById('mac-stats').innerHTML = `
+    <div class="stat-card stat-green"><div class="stat-label">Galibiyet</div><div class="stat-value">${gal}</div></div>
+    <div class="stat-card"><div class="stat-label">Beraberlik</div><div class="stat-value" style="color:var(--amber)">${ber}</div></div>
+    <div class="stat-card stat-red"><div class="stat-label">Yenilgi</div><div class="stat-value">${yen}</div></div>
+    <div class="stat-card"><div class="stat-label">Toplam</div><div class="stat-value stat-blue">${gal+ber+yen}</div><div class="stat-change">oynanan maç</div></div>`;
+  document.getElementById('mac-tbody').innerHTML = maclar.length ? maclar.map(m=>`
+    <tr>
+      <td style="color:var(--text3);font-size:12px">${m.tarih} ${m.saat}</td>
+      <td style="font-weight:500">${m.rakip}</td>
+      <td><span class="badge ${m.konum==='Ev'?'badge-green':'badge-amber'}">${m.konum}</span></td>
+      <td style="font-family:'DM Mono',monospace;font-weight:600">${m.skor}</td>
+      <td>${badgeForDurum(m.sonuc)}</td>
+      <td style="color:var(--text3);font-size:12px">${m.lig} ${m.not?'· '+m.not:''}</td>
+      <td><button class="btn btn-sm btn-danger" onclick="macSil(${m.id})">Sil</button></td>
+    </tr>`).join('') : '<tr><td colspan="7" class="empty">Maç kaydı bulunamadı</td></tr>';
+}
+function macEkle() {
+  const rakip = document.getElementById('mac-rakip').value.trim();
+  if(!rakip) { toast('Rakip takım adı zorunlu!'); return; }
+  const skor = document.getElementById('mac-skor').value||'-';
+  maclar.unshift({
+    id: nextMacId++,
+    tarih: document.getElementById('mac-tarih').value||new Date().toISOString().slice(0,10),
+    saat: document.getElementById('mac-saat').value||'15:00',
+    rakip, skor,
+    sonuc: calcSonuc(skor),
+    konum: document.getElementById('mac-konum').value,
+    lig: document.getElementById('mac-lig').value,
+    not: document.getElementById('mac-not').value
+  });
+  closeModal('modal-mac');
+  document.getElementById('mac-rakip').value='';
+  document.getElementById('mac-skor').value='';
+  document.getElementById('mac-not').value='';
+  renderMaclar(); toast('✓ Maç eklendi');
+}
+function macSil(id) {
+  if(!confirm('Bu maçı silmek istiyor musunuz?')) return;
+  maclar = maclar.filter(m=>m.id!==id);
+  renderMaclar(); toast('Maç silindi');
+}
+
+// ===================== DUYURULAR =====================
+function renderDuyurular() {
+  document.getElementById('duyuru-count-text').textContent = duyurular.length + ' duyuru';
+  document.getElementById('duyuru-list').innerHTML = duyurular.length ? duyurular.map(d=>`
+    <div class="duyuru-card">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px">
+        <div>
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px">
+            <div class="duyuru-title">${d.baslik}</div>
+            <span class="badge badge-blue">${d.kat}</span>
+          </div>
+          <div class="duyuru-text">${d.icerik}</div>
+          <div class="duyuru-meta">📅 ${d.tarih}</div>
+        </div>
+        <button class="btn btn-sm btn-danger" style="flex-shrink:0" onclick="duyuruSil(${d.id})">Sil</button>
+      </div>
+    </div>`).join('') : '<div class="empty" style="padding:40px">Henüz duyuru yok</div>';
+}
+function duyuruEkle() {
+  const baslik = document.getElementById('d-baslik').value.trim();
+  if(!baslik) { toast('Başlık zorunlu!'); return; }
+  const now = new Date().toLocaleDateString('tr-TR',{day:'numeric',month:'long',year:'numeric'});
+  duyurular.unshift({id:nextDuyuruId++,baslik,icerik:document.getElementById('d-icerik').value,tarih:now,kat:document.getElementById('d-kat').value});
+  closeModal('modal-duyuru');
+  document.getElementById('d-baslik').value='';
+  document.getElementById('d-icerik').value='';
+  renderDuyurular(); toast('✓ Duyuru yayınlandı');
+}
+function duyuruSil(id) {
+  if(!confirm('Bu duyuruyu silmek istiyor musunuz?')) return;
+  duyurular = duyurular.filter(d=>d.id!==id);
+  renderDuyurular(); toast('Duyuru silindi');
+}
+
+// ===================== RAPORLAR =====================
+function renderRaporlar() {
+  const chartData = [
+    {ay:'Ekim',val:15000},{ay:'Kasım',val:18000},{ay:'Aralık',val:16500},{ay:'Ocak',val:21000},{ay:'Şubat',val:20000},{ay:'Mart',val:19000}
+  ];
+  const maxVal = Math.max(...chartData.map(d=>d.val));
+  document.getElementById('rapor-chart').innerHTML = chartData.map(d=>`
+    <div class="bar-wrap">
+      <div class="bar-label">₺${Math.round(d.val/1000)}K</div>
+      <div class="bar" style="height:${Math.round(d.val/maxVal*90)}px" title="₺${d.val.toLocaleString('tr-TR')}"></div>
+      <div class="bar-month">${d.ay}</div>
+    </div>`).join('');
+  const gal = maclar.filter(m=>m.sonuc==='Galibiyet').length;
+  const ber = maclar.filter(m=>m.sonuc==='Beraberlik').length;
+  const yen = maclar.filter(m=>m.sonuc==='Yenilgi').length;
+  const total = gal+ber+yen||1;
+  document.getElementById('rapor-maclar').innerHTML = `
+    <div style="display:flex;gap:20px;margin-bottom:16px">
+      <div style="text-align:center"><div style="font-size:28px;font-weight:600;color:var(--green)">${gal}</div><div style="font-size:12px;color:var(--text3)">Galibiyet</div></div>
+      <div style="text-align:center"><div style="font-size:28px;font-weight:600;color:var(--amber)">${ber}</div><div style="font-size:12px;color:var(--text3)">Beraberlik</div></div>
+      <div style="text-align:center"><div style="font-size:28px;font-weight:600;color:var(--red)">${yen}</div><div style="font-size:12px;color:var(--text3)">Yenilgi</div></div>
+    </div>
+    <div class="progress-bar" style="height:10px">
+      <div class="progress-fill green" style="width:${Math.round(gal/total*100)}%"></div>
+    </div>
+    <div style="font-size:12px;color:var(--text3);margin-top:6px">${gal+ber+yen} maçta %${Math.round(gal/total*100)} galibiyet</div>`;
+  const od = uyeler.filter(u=>u.durum==='odendi').length;
+  const bek = uyeler.filter(u=>u.durum==='bekliyor').length;
+  const gec = uyeler.filter(u=>u.durum==='gecikti').length;
+  document.getElementById('rapor-aidat-dag').innerHTML = [
+    {label:'Ödendi',val:od,cls:'badge-green'},
+    {label:'Bekliyor',val:bek,cls:'badge-amber'},
+    {label:'Gecikmiş',val:gec,cls:'badge-red'}
+  ].map(r=>`
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)">
+      <span class="badge ${r.cls}">${r.label}</span>
+      <span style="font-family:'DM Mono',monospace;font-weight:500">${r.val} üye</span>
+    </div>`).join('');
+  const pozCount = {};
+  uyeler.forEach(u=>{ pozCount[u.poz]=(pozCount[u.poz]||0)+1; });
+  document.getElementById('rapor-pozisyon').innerHTML = Object.entries(pozCount).sort((a,b)=>b[1]-a[1]).map(([poz,c])=>`
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)">
+      <span style="font-size:13px">${poz}</span>
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="width:80px;height:5px;background:var(--border);border-radius:3px;overflow:hidden"><div style="width:${Math.round(c/uyeler.length*100)}%;height:100%;background:var(--accent);border-radius:3px"></div></div>
+        <span style="font-family:'DM Mono',monospace;font-size:12px;color:var(--text3)">${c}</span>
+      </div>
+    </div>`).join('');
+}
+
+// Modal dışına tıklayınca kapat
+document.querySelectorAll('.modal-overlay').forEach(overlay=>{
+  overlay.addEventListener('click', e=>{ if(e.target===overlay) overlay.classList.add('hidden'); });
+});
+
+// Tarih alanlarını bugüne ayarla
+document.querySelectorAll('input[type="date"]').forEach(el=>{ if(!el.value) el.value=new Date().toISOString().slice(0,10); });
+
+// İlk render
+renderDashboard();
+</script>
+</body>
+</html>
